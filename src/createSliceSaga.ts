@@ -9,7 +9,7 @@ import {
   createAction,
 } from '@reduxjs/toolkit';
 import { _ActionCreatorWithPreparedPayload } from '@reduxjs/toolkit/dist/index';
-import { call, takeLatest, all } from 'redux-saga/effects';
+import { call, takeLatest, all, CallEffect } from 'redux-saga/effects';
 
 export type CaseSagas<A extends Action = AnyAction> = (action: A) => void;
 
@@ -88,7 +88,7 @@ export function createSliceSaga<
   const { caseSagas, name, isWatchSaga } = options;
   const caseSagasNames = Object.keys(caseSagas);
   const actionCreators: Record<string, Function> = {};
-  const sagas: Function[] = [];
+  const sagas: CallEffect[] = [];
 
   caseSagasNames.forEach((sagaName) => {
     const type = getType(name, sagaName);
@@ -97,13 +97,13 @@ export function createSliceSaga<
       ? createAction(type, prepareCallback)
       : createAction(type);
 
-    sagas.push(function* () {
-      yield call(
+    sagas.push(
+      call(
         isWatchSaga
           ? createWatchSaga(sagaName, caseSagas[sagaName])
           : caseSagas[sagaName],
-      );
-    });
+      ),
+    );
   });
   const saga: Function = function* () {
     yield all(sagas);
