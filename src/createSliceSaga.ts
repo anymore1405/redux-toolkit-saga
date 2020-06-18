@@ -64,6 +64,7 @@ export interface Slice<
 > {
   name: Name;
   saga: any;
+  listSagas: Function[];
   actions: CaseSagaActions<CaseSagas>;
   isWatchSaga: boolean;
 }
@@ -74,6 +75,13 @@ export function createWatchSaga(
 ): any {
   return function* () {
     yield takeLatest(type, sagaFunction);
+  };
+}
+
+export function createSagas(sagas: Function[]): Function {
+  sagas.map((saga: any) => call(saga));
+  return function* () {
+    yield all(sagas);
   };
 }
 
@@ -89,6 +97,7 @@ export function createSliceSaga<
   const caseSagasNames = Object.keys(caseSagas);
   const actionCreators: Record<string, Function> = {};
   const sagas: CallEffect[] = [];
+  const listSagas: Function[] = [];
 
   caseSagasNames.forEach((sagaName) => {
     const type = getType(name, sagaName);
@@ -100,14 +109,17 @@ export function createSliceSaga<
     sagas.push(
       call(
         isWatchSaga
-          ? createWatchSaga(sagaName, caseSagas[sagaName])
+          ? createWatchSaga(type, caseSagas[sagaName])
           : caseSagas[sagaName],
       ),
     );
+
+    sagas[sagaName].type = type;
+    listSagas.push(sagas[sagaName]);
   });
   const saga: Function = function* () {
     yield all(sagas);
   };
 
-  return { saga, name, actions: actionCreators as any, isWatchSaga };
+  return { saga, name, actions: actionCreators as any, isWatchSaga, listSagas };
 }

@@ -8,4 +8,5 @@ export {
   createWatchSaga,
   getType,
   Slice,
+  createSagas,
 } from './createSliceSaga';
