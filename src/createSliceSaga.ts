@@ -88,7 +88,7 @@ export function createSliceSaga<
   const { caseSagas, name, isWatchSaga } = options;
   const caseSagasNames = Object.keys(caseSagas);
   const actionCreators: Record<string, Function> = {};
-  const sagas: any[] = [];
+  const sagas: Function[] = [];
 
   caseSagasNames.forEach((sagaName) => {
     const type = getType(name, sagaName);
@@ -105,8 +105,8 @@ export function createSliceSaga<
       );
     });
   });
-  const saga: any = function* () {
-    yield all([...sagas]);
+  const saga: Function = function* () {
+    yield all(sagas);
   };
 
   return { saga, name, actions: actionCreators as any, isWatchSaga };
