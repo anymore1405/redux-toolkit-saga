@@ -9,4 +9,6 @@ export {
   getType,
   Slice,
   createSagas,
+  SagaType,
+  createTakeLatestSaga,
 } from './createSliceSaga';

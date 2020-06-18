@@ -9,7 +9,20 @@ import {
   createAction,
 } from '@reduxjs/toolkit';
 import { _ActionCreatorWithPreparedPayload } from '@reduxjs/toolkit/dist/index';
-import { call, takeLatest, all, CallEffect } from 'redux-saga/effects';
+import {
+  call,
+  takeLatest,
+  all,
+  CallEffect,
+  take,
+  fork,
+} from 'redux-saga/effects';
+
+export enum SagaType {
+  Watch,
+  Normal,
+  TakeLatest,
+}
 
 export type CaseSagas<A extends Action = AnyAction> = (action: A) => void;
 
@@ -55,7 +68,7 @@ export interface CreateOptionsSliceSaga<
 > {
   name: Name;
   caseSagas: ValidateSliceCaseSagas<CR>;
-  isWatchSaga: boolean;
+  sagaType: SagaType;
 }
 
 export interface Slice<
@@ -65,7 +78,16 @@ export interface Slice<
   name: Name;
   saga: any;
   actions: CaseSagaActions<CaseSagas>;
-  isWatchSaga: boolean;
+  sagaType: SagaType;
+}
+
+export function createTakeLatestSaga(
+  type: string,
+  sagaFunction: CaseSagas<PayloadAction<any>>,
+): any {
+  return function* () {
+    yield takeLatest(type, sagaFunction);
+  };
 }
 
 export function createWatchSaga(
@@ -73,7 +95,10 @@ export function createWatchSaga(
   sagaFunction: CaseSagas<PayloadAction<any>>,
 ): any {
   return function* () {
-    yield takeLatest(type, sagaFunction);
+    while (true) {
+      const action = yield take(type);
+      yield fork(sagaFunction, action);
+    }
   };
 }
 
@@ -92,7 +117,7 @@ export function createSliceSaga<
   CaseSagas extends SliceCaseSagas,
   Name extends string = string
 >(options: CreateOptionsSliceSaga<CaseSagas, Name>): Slice<CaseSagas, Name> {
-  const { caseSagas, name, isWatchSaga } = options;
+  const { caseSagas, name, sagaType } = options;
   const caseSagasNames = Object.keys(caseSagas);
   const actionCreators: Record<string, Function> = {};
   const sagas: CallEffect[] = [];
@@ -106,9 +131,11 @@ export function createSliceSaga<
 
     sagas.push(
       call(
-        isWatchSaga
+        sagaType == SagaType.Normal
+          ? caseSagas[sagaName]
+          : sagaType == SagaType.Watch
           ? createWatchSaga(type, caseSagas[sagaName])
-          : caseSagas[sagaName],
+          : createTakeLatestSaga(type, caseSagas[sagaName]),
       ),
     );
   });
@@ -116,5 +143,5 @@ export function createSliceSaga<
     yield all(sagas);
   };
 
-  return { saga, name, actions: actionCreators as any, isWatchSaga };
+  return { saga, name, actions: actionCreators as any, sagaType };
 }
