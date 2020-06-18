@@ -64,7 +64,6 @@ export interface Slice<
 > {
   name: Name;
   saga: any;
-  listSagas: Function[];
   actions: CaseSagaActions<CaseSagas>;
   isWatchSaga: boolean;
 }
@@ -97,7 +96,6 @@ export function createSliceSaga<
   const caseSagasNames = Object.keys(caseSagas);
   const actionCreators: Record<string, Function> = {};
   const sagas: CallEffect[] = [];
-  const listSagas: Function[] = [];
 
   caseSagasNames.forEach((sagaName) => {
     const type = getType(name, sagaName);
@@ -113,13 +111,10 @@ export function createSliceSaga<
           : caseSagas[sagaName],
       ),
     );
-
-    sagas[sagaName].type = type;
-    listSagas.push(sagas[sagaName]);
   });
   const saga: Function = function* () {
     yield all(sagas);
   };
 
-  return { saga, name, actions: actionCreators as any, isWatchSaga, listSagas };
+  return { saga, name, actions: actionCreators as any, isWatchSaga };
 }

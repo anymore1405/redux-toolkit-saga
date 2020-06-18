@@ -1,6 +1,6 @@
 {
   "name": "redux-toolkit-saga",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Redux Toolkit Saga",
   "engines": {
     "node": ">= 12.13 <13"
