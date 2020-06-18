@@ -5,11 +5,11 @@ import {
   PayloadAction,
   PayloadActionCreator,
   ActionCreatorWithoutPayload,
-  _ActionCreatorWithPreparedPayload,
   PrepareAction,
   createAction,
-} from '@reduxjs/toolkit/src/createAction';
-import { call, takeLatest } from 'redux-saga/effects';
+} from '@reduxjs/toolkit';
+import { _ActionCreatorWithPreparedPayload } from '@reduxjs/toolkit/dist/index';
+import { call, takeLatest, all } from 'redux-saga/effects';
 
 export type CaseSagas<A extends Action = AnyAction> = (action: A) => void;
 
@@ -49,7 +49,7 @@ export type ValidateSliceCaseSagas<ACR extends SliceCaseSagas> = ACR &
       : {};
   };
 
-interface CreateOptionsSliceSaga<
+export interface CreateOptionsSliceSaga<
   CR extends SliceCaseSagas = SliceCaseSagas,
   Name extends string = string
 > {
@@ -58,7 +58,7 @@ interface CreateOptionsSliceSaga<
   isWatchSaga: boolean;
 }
 
-interface Slice<
+export interface Slice<
   CaseSagas extends SliceCaseSagas = SliceCaseSagas,
   Name extends string = string
 > {
@@ -68,15 +68,16 @@ interface Slice<
   isWatchSaga: boolean;
 }
 
-function createWatchSaga(
+export function createWatchSaga(
   type: string,
   sagaFunction: CaseSagas<PayloadAction<any>>,
-) {
+): any {
   return function* () {
     yield takeLatest(type, sagaFunction);
   };
 }
-function getType(slice: string, actionKey: string): string {
+
+export function getType(slice: string, actionKey: string): string {
   return `${slice}/${actionKey}`;
 }
 
@@ -87,7 +88,7 @@ export function createSliceSaga<
   const { caseSagas, name, isWatchSaga } = options;
   const caseSagasNames = Object.keys(caseSagas);
   const actionCreators: Record<string, Function> = {};
-  const saga: any[] = [];
+  const sagas: any[] = [];
 
   caseSagasNames.forEach((sagaName) => {
     const type = getType(name, sagaName);
@@ -96,7 +97,7 @@ export function createSliceSaga<
       ? createAction(type, prepareCallback)
       : createAction(type);
 
-    saga.push(function* () {
+    sagas.push(function* () {
       yield call(
         isWatchSaga
           ? createWatchSaga(sagaName, caseSagas[sagaName])
@@ -104,6 +105,9 @@ export function createSliceSaga<
       );
     });
   });
+  const saga: any = function* () {
+    yield all([...sagas]);
+  };
 
   return { saga, name, actions: actionCreators as any, isWatchSaga };
 }

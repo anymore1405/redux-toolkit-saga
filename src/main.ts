@@ -1,4 +1,11 @@
-/**
- * Some predefined delays (in milliseconds).
- */
-export { createSliceSaga } from './createSliceSaga';
+export {
+  createSliceSaga,
+  CaseSagaActions,
+  CaseSagas,
+  SliceCaseSagas,
+  ValidateSliceCaseSagas,
+  CreateOptionsSliceSaga,
+  createWatchSaga,
+  getType,
+  Slice,
+} from './createSliceSaga';
