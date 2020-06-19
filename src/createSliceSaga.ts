@@ -102,7 +102,7 @@ export function createWatchSaga(
   };
 }
 
-export function createSagas(sagas: any[]): Function {
+export function createSagas(sagas: any[]): any {
   sagas.map((saga: any) => call(saga));
   return function* () {
     yield all(sagas);
