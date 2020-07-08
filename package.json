@@ -1,10 +1,7 @@
 {
   "name": "redux-toolkit-saga",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Redux Toolkit Saga",
-  "engines": {
-    "node": ">= 12.13 <13"
-  },
   "keywords": ["redux", "redux-saga", "saga", "toolkit"],
   "main": "lib/main.js",
   "types": "lib/main.d.ts",
