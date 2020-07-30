@@ -1,6 +1,6 @@
 {
   "name": "redux-toolkit-saga",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Redux Toolkit Saga",
   "keywords": ["redux", "redux-saga", "saga", "toolkit"],
   "main": "lib/main.js",
@@ -8,6 +8,9 @@
   "files": [
     "lib/"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "license": "MIT",
   "repository": "https://github.com/anymore1405/redux-toolkit-saga",
   "devDependencies": {

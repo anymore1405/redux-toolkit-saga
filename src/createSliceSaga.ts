@@ -7,6 +7,7 @@ import {
   ActionCreatorWithoutPayload,
   PrepareAction,
   createAction,
+  ActionCreatorWithPreparedPayload,
 } from '@reduxjs/toolkit';
 import { _ActionCreatorWithPreparedPayload } from '@reduxjs/toolkit/dist/index';
 import {
@@ -16,6 +17,7 @@ import {
   CallEffect,
   take,
   fork,
+  AllEffect,
 } from 'redux-saga/effects';
 
 export enum SagaType {
@@ -34,11 +36,6 @@ type ActionCreatorForCaseSagaWithPrepare<
   CR extends { prepare: any }
 > = _ActionCreatorWithPreparedPayload<CR['prepare'], string>;
 
-/**
- * Get a `PayloadActionCreator` type for a passed `CaseReducer`
- *
- * @internal
- */
 type ActionCreatorForCaseSagas<CR> = CR extends (action: infer Action) => any
   ? Action extends { payload: infer P }
     ? PayloadActionCreator<P>
@@ -103,9 +100,12 @@ export function createWatchSaga(
 }
 
 export function createSagas(sagas: any[]): any {
-  sagas.map((saga: any) => call(saga));
+  const sagaTemp = [];
+  sagas.forEach((saga: any) => {
+    sagaTemp.push(call(saga));
+  });
   return function* () {
-    yield all(sagas);
+    yield all(sagaTemp);
   };
 }
 
@@ -119,7 +119,10 @@ export function createSliceSaga<
 >(options: CreateOptionsSliceSaga<CaseSagas, Name>): Slice<CaseSagas, Name> {
   const { caseSagas, name, sagaType } = options;
   const caseSagasNames = Object.keys(caseSagas);
-  const actionCreators: Record<string, Function> = {};
+  const actionCreators: Record<
+    string,
+    ActionCreatorWithPreparedPayload<any[], any, string, never, never>
+  > = {};
   const sagas: CallEffect[] = [];
 
   caseSagasNames.forEach((sagaName) => {
@@ -139,7 +142,11 @@ export function createSliceSaga<
       ),
     );
   });
-  const saga: Function = function* () {
+  const saga: () => Generator<
+    AllEffect<CallEffect<any>>,
+    void,
+    unknown
+  > = function* () {
     yield all(sagas);
   };
 
