@@ -9,7 +9,6 @@ import {
   createAction,
   ActionCreatorWithPreparedPayload,
 } from '@reduxjs/toolkit';
-import { _ActionCreatorWithPreparedPayload } from '@reduxjs/toolkit/dist/index';
 import {
   call,
   takeLatest,
@@ -19,14 +18,16 @@ import {
   fork,
   AllEffect,
 } from 'redux-saga/effects';
-
+import { SagaIterator } from 'redux-saga';
 export enum SagaType {
   Watch,
   Normal,
   TakeLatest,
 }
 
-export type CaseSagas<A extends Action = AnyAction> = (action: A) => void;
+export type CaseSagas<A extends Action = AnyAction> = (
+  action: A,
+) => Generator<unknown, unknown, SagaIterator>;
 
 export type SliceCaseSagas = {
   [K: string]: CaseSagas<PayloadAction<any>>;
@@ -34,7 +35,7 @@ export type SliceCaseSagas = {
 
 type ActionCreatorForCaseSagaWithPrepare<
   CR extends { prepare: any }
-> = _ActionCreatorWithPreparedPayload<CR['prepare'], string>;
+> = ActionCreatorWithPreparedPayload<CR['prepare'], string>;
 
 type ActionCreatorForCaseSagas<CR> = CR extends (action: infer Action) => any
   ? Action extends { payload: infer P }
@@ -99,7 +100,9 @@ export function createWatchSaga(
   };
 }
 
-export function createSagas(sagas: any[]): any {
+export function createSagas(
+  sagas: (() => Generator<unknown, void, SagaIterator>)[],
+): any {
   const sagaTemp = [];
   sagas.forEach((saga: any) => {
     sagaTemp.push(call(saga));
