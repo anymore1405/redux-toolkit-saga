@@ -74,7 +74,7 @@ export interface Slice<
   Name extends string = string
 > {
   name: Name;
-  saga: any;
+  saga: () => Generator<AllEffect<CallEffect<any>>, void, unknown>;
   actions: CaseSagaActions<CaseSagas>;
   sagaType: SagaType;
 }
@@ -145,13 +145,9 @@ export function createSliceSaga<
       ),
     );
   });
-  const saga: () => Generator<
-    AllEffect<CallEffect<any>>,
-    void,
-    unknown
-  > = function* () {
+  function* saga(): Generator<AllEffect<CallEffect<any>>, void, unknown> {
     yield all(sagas);
-  };
+  }
 
   return { saga, name, actions: actionCreators as any, sagaType };
 }

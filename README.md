@@ -24,10 +24,10 @@ import { PayloadAction } from "@reduxjs/toolkit";
 const slice = createSliceSaga({
   name: "testSlice",
   caseSagas: {
-    action1: function* (action: PayloadAction<string>) {
+    *action1 (action: PayloadAction<string>) {
       yield console.log("ok1", action.payload);
     },
-    action2: function* (action: PayloadAction<number>) {
+    *action2 (action: PayloadAction<number>) {
       yield console.log("ok2", action.payload);
     },
   },
@@ -39,3 +39,4 @@ const composeSaga = slice.saga; // call composeSaga in root saga
 const { action1, action2 } = slice.actions; // action with caseSagas
 
 ```
+![Example](https://media.giphy.com/media/ZZa9d02H5Tx1XENQu9/giphy.gif)
