@@ -12,6 +12,7 @@ import {
 import {
   call,
   takeLatest,
+  takeEvery,
   all,
   CallEffect,
   take,
@@ -23,6 +24,7 @@ export enum SagaType {
   Watch,
   Normal,
   TakeLatest,
+  TakeEvery,
 }
 
 export type CaseSagas<A extends Action = AnyAction> = (
@@ -66,7 +68,7 @@ export interface CreateOptionsSliceSaga<
 > {
   name: Name;
   caseSagas: ValidateSliceCaseSagas<CR>;
-  sagaType: SagaType;
+  sagaType?: SagaType;
 }
 
 export interface Slice<
@@ -79,25 +81,28 @@ export interface Slice<
   sagaType: SagaType;
 }
 
-export function createTakeLatestSaga(
+export function createSaga(
+  sagaType: string | number,
   type: string,
   sagaFunction: CaseSagas<PayloadAction<any>>,
 ): any {
-  return function* () {
-    yield takeLatest(type, sagaFunction);
-  };
-}
-
-export function createWatchSaga(
-  type: string,
-  sagaFunction: CaseSagas<PayloadAction<any>>,
-): any {
-  return function* () {
-    while (true) {
-      const action = yield take(type);
-      yield fork(sagaFunction, action);
-    }
-  };
+  switch (sagaType) {
+    case SagaType.TakeLatest:
+      return function* () {
+        yield takeLatest(type, sagaFunction);
+      };
+    case SagaType.Watch:
+      return function* () {
+        while (true) {
+          const action = yield take(type);
+          yield fork(sagaFunction, action);
+        }
+      };
+    default:
+      return function* () {
+        yield takeEvery(type, sagaFunction);
+      };
+  }
 }
 
 export function createSagas(
@@ -120,7 +125,7 @@ export function createSliceSaga<
   CaseSagas extends SliceCaseSagas,
   Name extends string = string
 >(options: CreateOptionsSliceSaga<CaseSagas, Name>): Slice<CaseSagas, Name> {
-  const { caseSagas, name, sagaType } = options;
+  const { caseSagas, name, sagaType = SagaType.TakeEvery } = options;
   const caseSagasNames = Object.keys(caseSagas);
   const actionCreators: Record<
     string,
@@ -137,11 +142,9 @@ export function createSliceSaga<
 
     sagas.push(
       call(
-        sagaType == SagaType.Normal
+        sagaType === SagaType.Normal
           ? caseSagas[sagaName]
-          : sagaType == SagaType.Watch
-          ? createWatchSaga(type, caseSagas[sagaName])
-          : createTakeLatestSaga(type, caseSagas[sagaName]),
+          : createSaga(sagaType, type, caseSagas[sagaName]),
       ),
     );
   });
