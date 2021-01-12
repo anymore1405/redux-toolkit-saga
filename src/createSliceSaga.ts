@@ -17,7 +17,6 @@ import {
   CallEffect,
   take,
   fork,
-  AllEffect,
 } from 'redux-saga/effects';
 import { SagaIterator } from 'redux-saga';
 export enum SagaType {
@@ -71,12 +70,14 @@ export interface CreateOptionsSliceSaga<
   sagaType?: SagaType;
 }
 
+export type CallEffects = CallEffect[];
+
 export interface Slice<
   CaseSagas extends SliceCaseSagas = SliceCaseSagas,
   Name extends string = string
 > {
   name: Name;
-  saga: () => Generator<AllEffect<CallEffect<any>>, void, unknown>;
+  callEffects: CallEffects;
   actions: CaseSagaActions<CaseSagas>;
   sagaType: SagaType;
 }
@@ -105,15 +106,13 @@ export function createSaga(
   }
 }
 
-export function createSagas(
-  sagas: (() => Generator<unknown, void, SagaIterator>)[],
-): any {
-  const sagaTemp = [];
-  sagas.forEach((saga: any) => {
-    sagaTemp.push(call(saga));
+export function createRootSaga(callEffects: CallEffects[]): any {
+  let rootCallEffects: CallEffects = [];
+  callEffects.forEach((callEffectArr: CallEffects) => {
+    rootCallEffects = [...rootCallEffects, ...callEffectArr];
   });
   return function* () {
-    yield all(sagaTemp);
+    yield all(rootCallEffects);
   };
 }
 
@@ -131,8 +130,7 @@ export function createSliceSaga<
     string,
     ActionCreatorWithPreparedPayload<any[], any, string, never, never>
   > = {};
-  const sagas: CallEffect[] = [];
-
+  const callEffects: CallEffects = [];
   caseSagasNames.forEach((sagaName) => {
     const type = getType(name, sagaName);
     let prepareCallback: PrepareAction<any> | undefined;
@@ -140,7 +138,7 @@ export function createSliceSaga<
       ? createAction(type, prepareCallback)
       : createAction(type);
 
-    sagas.push(
+    callEffects.push(
       call(
         sagaType === SagaType.Normal
           ? caseSagas[sagaName]
@@ -148,9 +146,6 @@ export function createSliceSaga<
       ),
     );
   });
-  function* saga(): Generator<AllEffect<CallEffect<any>>, void, unknown> {
-    yield all(sagas);
-  }
 
-  return { saga, name, actions: actionCreators as any, sagaType };
+  return { callEffects, name, actions: actionCreators as any, sagaType };
 }
