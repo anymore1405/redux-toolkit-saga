@@ -17,6 +17,7 @@ import {
   CallEffect,
   take,
   fork,
+  AllEffect,
 } from 'redux-saga/effects';
 import { SagaIterator } from 'redux-saga';
 export enum SagaType {
@@ -70,14 +71,14 @@ export interface CreateOptionsSliceSaga<
   sagaType?: SagaType;
 }
 
-export type CallEffects = CallEffect[];
+type SagaFunReturnType = Generator<AllEffect<CallEffect<any>>, void, unknown>;
 
 export interface Slice<
   CaseSagas extends SliceCaseSagas = SliceCaseSagas,
   Name extends string = string
 > {
   name: Name;
-  callEffects: CallEffects;
+  saga: () => SagaFunReturnType;
   actions: CaseSagaActions<CaseSagas>;
   sagaType: SagaType;
 }
@@ -106,13 +107,14 @@ export function createSaga(
   }
 }
 
-export function createRootSaga(callEffects: CallEffects[]): any {
-  let rootCallEffects: CallEffects = [];
-  callEffects.forEach((callEffectArr: CallEffects) => {
-    rootCallEffects = [...rootCallEffects, ...callEffectArr];
+export function createSagas(
+  sagas: (() => Generator<unknown, void, SagaIterator>)[],
+): any {
+  const sagaTemp = sagas.map((saga: any) => {
+    return call(saga);
   });
   return function* () {
-    yield all(rootCallEffects);
+    yield all(sagaTemp);
   };
 }
 
@@ -130,7 +132,8 @@ export function createSliceSaga<
     string,
     ActionCreatorWithPreparedPayload<any[], any, string, never, never>
   > = {};
-  const callEffects: CallEffects = [];
+  const sagas: CallEffect[] = [];
+
   caseSagasNames.forEach((sagaName) => {
     const type = getType(name, sagaName);
     let prepareCallback: PrepareAction<any> | undefined;
@@ -138,7 +141,7 @@ export function createSliceSaga<
       ? createAction(type, prepareCallback)
       : createAction(type);
 
-    callEffects.push(
+    sagas.push(
       call(
         sagaType === SagaType.Normal
           ? caseSagas[sagaName]
@@ -147,5 +150,9 @@ export function createSliceSaga<
     );
   });
 
-  return { callEffects, name, actions: actionCreators as any, sagaType };
+  function* saga(): SagaFunReturnType {
+    yield all(sagas);
+  }
+
+  return { saga, name, actions: actionCreators as any, sagaType };
 }
