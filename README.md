@@ -14,7 +14,7 @@ npm install redux-toolkit-saga --save
 | -------------- | --------  | --------------------------------------------------------------------------- |
 | name       | YES       | A string name for this slice of state. Generated action type constants will use this as a prefix                                           |
 | caseSagas | YES         | An object containing "case sagas" functions (functions intended to handle a specific action type|
-| sagaType           | YES      | `SagaType.Normal`, `SagaType.Watch`, `SagaType.TakeLatest`|
+| sagaType           | NO      | `SagaType.Normal`, `SagaType.Watch`, `SagaType.TakeLatest`, `SagaType.TakeEvery(default)`|
 
 ## Example
 ```ts
