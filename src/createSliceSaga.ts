@@ -44,7 +44,13 @@ type ActionCreatorForCaseSagaWithPrepare<
   CR extends { prepare: any }
 > = ActionCreatorWithPreparedPayload<CR['prepare'], string>;
 
-type ActionCreatorForCaseSagas<CR> = CR extends (action: infer Action) => any
+type ActionCreatorForCaseSagas<CR> = CR extends CustomCaseSaga
+  ? CR['fn'] extends (action: infer Action) => any
+    ? Action extends { payload: infer P }
+      ? PayloadActionCreator<P>
+      : ActionCreatorWithoutPayload
+    : ActionCreatorWithoutPayload
+  : CR extends (action: infer Action) => any
   ? Action extends { payload: infer P }
     ? PayloadActionCreator<P>
     : ActionCreatorWithoutPayload
@@ -147,13 +153,11 @@ export function createSliceSaga<
   const sagas: CallEffect[] = [];
 
   caseSagasNames.forEach((sagaName) => {
+    let toBeCalled;
     const type = getType(name, sagaName);
-
-    actionCreators[sagaName] = createAction(type);
-
     const currentCaseSaga = caseSagas[sagaName];
 
-    let toBeCalled;
+    actionCreators[sagaName] = createAction(type);
 
     if (isCustomCaseSaga(currentCaseSaga)) {
       toBeCalled =
