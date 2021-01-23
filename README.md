@@ -30,6 +30,12 @@ const slice = createSliceSaga({
     *action2 (action: PayloadAction<number>) {
       yield console.log("ok2", action.payload);
     },
+    action3: {
+        sagaType: SagaType.TakeLatest,
+        *fn(action: PayloadAction<boolean>) {
+            yield console.log("ok3", action.payload);
+        },
+    }
   },
   sagaType: SagaType.Watch,
 });
